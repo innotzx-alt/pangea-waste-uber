@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pangea Waste Uber</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #202024;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid #323238;
+        }
+        h2 {
+            color: #04d361;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #8d8d99;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+            color: #c4c4cc;
+        }
+        select, input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 5px;
+            border: 1px solid #323238;
+            background-color: #121214;
+            color: #fff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        select:focus, input:focus {
+            border-color: #04d361;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #04d361;
+            color: #121214;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #00b351;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #121214;
+            border-left: 4px solid #04d361;
+            border-radius: 4px;
+            display: none;
+        }
+        .result-title {
+            font-weight: bold;
+            color: #04d361;
+            margin-bottom: 5px;
+        }
+        .result-item {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #c4c4cc;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Pangea Waste Uber</h2>
+    <p class="subtitle">The Ghost Architect Engine V1.0</p>
+    
+    <div class="form-group">
+        <label for="mteja">Jina Lako:</label>
+        <input type="text" id="mteja" value="Innocent">
+    </div>
+
+    <div class="form-group">
+        <label for="mtaa">Chagua Mtaa:</label>
+        <select id="mtaa">
+            <option value="Mwenge">Mwenge</option>
+            <option value="Sinza">Sinza</option>
+            <option value="Posta">Posta</option>
+            <option value="Mbezi">Mbezi</option>
+            <option value="Uru">Uru</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="watu">Idadi ya Watu Nyumbani:</label>
+        <input type="number" id="watu" value="4" min="1">
+    </div>
+
+    <button onclick="ombaGari()">OMBA GARI LA TAKA</button>
+
+    <div class="result-box" id="resultBox">
+        <div class="result-title">⚡ Safari Imetengenezwa Live!</div>
+        <div class="result-item" id="resDereva"></div>
+        <div class="result-item" id="resGari"></div>
+        <div class="result-item" id="resTani"></div>
+        <div class="result-item" id="resKamisheni"></div>
+    </div>
+</div>
+
+<script>
+    async function ombaGari() {
+        const mteja = document.getElementById('mteja').value;
+        const mtaa = document.getElementById('mtaa').value;
+        const watu = document.getElementById('watu').value;
+
+        const response = await fetch('/omba_gari', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mteja, mtaa, watu: parseInt(watu), aina_huduma: "Kaya" })
+        });
+
+        const resData = await response.json();
+        
+        if(resData.status) {
+            const data = resData.data_ya_safari;
+            document.getElementById('resDereva').innerText = "Dereva: " + data.dereva + " (" + data.simu_dereva + ")";
+            document.getElementById('resGari').innerText = "Gari: " + data.gari;
+            document.getElementById('resTani').innerText = "Taka Zilizokadiriwa na AI: " + data.tani_ai + " Tani";
+            document.getElementById('resKamisheni').innerText = "Kamisheni Yako: TSh " + data.kamisheni_tsh;
+            document.getElementById('resultBox').style.display = 'block';
+        } else {
+            alert("Kuna shida imetokea!");
+        }
+    }
+</script>
+
+</body>
+</html>
