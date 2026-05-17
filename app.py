@@ -4,7 +4,7 @@ from flask import Flask, request, jsonify, render_template
 from sklearn.linear_model import LinearRegression
 import numpy as np
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # Mafaili ya Kutunza Data
 FAILI_LA_MADEREVA = "madereva.json"
