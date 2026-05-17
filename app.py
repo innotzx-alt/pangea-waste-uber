@@ -4,6 +4,7 @@ from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
+# Database za muda
 FAILI_LA_SAFARI = '/tmp/safari_data.json'
 FAILI_LA_MADEREVA = '/tmp/madereva_data.json'
 
@@ -31,10 +32,12 @@ def hifadhi_data(njia_ya_faili, data):
 pakia_data(FAILI_LA_MADEREVA, MADEREVA_DEFAULT)
 pakia_data(FAILI_LA_SAFARI, [])
 
+# 1. Ukurasa wa Mteja
 @app.route('/', methods=['GET'])
 def nyumbani():
     return render_template('index.html')
 
+# 2. API ya Kuomba Gari
 @app.route('/omba_gari', methods=['POST', 'GET'])
 def omba_gari():
     if request.method == 'GET':
@@ -78,10 +81,12 @@ def omba_gari():
 
     return jsonify({"status": True, "data_ya_safari": safari_mpya})
 
+# 3. Ukurasa wa Dereva (Njia fupi na sahihi ya kiwanda)
 @app.route('/dereva', methods=['GET'])
 def ukurasa_wa_dereva():
     return render_template('dereva.html')
 
+# 4. API ya madereva kuona order live
 @app.route('/api/pata_order', methods=['GET'])
 def pata_order_live():
     safari_zote = pakia_data(FAILI_LA_SAFARI)
