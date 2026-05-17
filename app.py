@@ -1,91 +1,72 @@
 import os
 import json
-from flask import Flask, request, jsonify, render_template
-from sklearn.linear_model import LinearRegression
-import numpy as np
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-# Mafaili ya Kutunza Data
-FAILI_LA_MADEREVA = "madereva.json"
-FAILI_LA_SAFARI = "safari.json"
+# Mafaili ya kuhifadhia data (Database za muda)
+FAILI_LA_SAFARI = '/tmp/safari_data.json'
+FAILI_LA_MADEREVA = '/tmp/madereva_data.json'
 
-# --- 1. UBINGO WA AI (Linear Regression) ---
-idadi_ya_watu = np.array([[1], [2], [3], [5], [6], [8]])
-tani_za_taka = np.array([0.2, 0.4, 0.6, 1.1, 1.3, 1.8])
+# Orodha ya Madereva wa mwanzo (Initial Fleet)
+MADEREVA_DEFAULT = [
+    {"id": 1, "jina": "Kassim wa Guta", "aina_gari": "Guta/Mkokoteni", "simu": "071123344", "uwezo_tani": 0.5, "status": "wazi"},
+    {"id": 2, "jina": "Mzee Juma", "aina_gari": "TATA Pick-up", "simu": "0655998877", "uwezo_tani": 1.5, "status": "wazi"},
+    {"id": 3, "jina": "Chonji", "aina_gari": "Canter Mzigo", "simu": "0766112233", "uwezo_tani": 3.5, "status": "wazi"}
+]
 
-ubongo_wa_ai = LinearRegression()
-ubongo_wa_ai.fit(idadi_ya_watu, tani_za_taka)
+# Kazi za Kusaidia Kusoma na Kuhifadhi Data kwenye Faili
+def pakia_data(njia_ya_faili, data_default=[]):
+    if not os.path.exists(njia_ya_faili):
+        with open(njia_ya_faili, 'w') as f:
+            json.dump(data_default, f)
+        return data_default
+    try:
+        with open(njia_ya_faili, 'r') as f:
+            return json.load(f)
+    except:
+        return data_default
 
-def pakia_data(faili, chaguo_default=[]):
-    if os.path.exists(faili):
-        with open(faili, "r") as f:
-            try:
-                return json.load(f)
-            except:
-                return chaguo_default
-    return chaguo_default
+def hifadhi_data(njia_ya_faili, data):
+    with open(njia_ya_faili, 'w') as f:
+        json.dump(data, f)
 
-def hifadhi_data(faili, data):
-    with open(faili, "w") as f:
-        json.dump(data, f, indent=4)
+# Hakikisha database za muda zimepakiwa mwanzoni kabisa
+pakia_data(FAILI_LA_MADEREVA, MADEREVA_DEFAULT)
+pakia_data(FAILI_LA_SAFARI, [])
 
-# ==========================================
-# 2. WEB ENDPOINTS (Anwani za Mtandao)
-# ==========================================
-
+# ANWANI YA 1: Ukurasa Mkuu wa Mteja (Unasoma index.html ya nje tuliyoweka)
 @app.route('/', methods=['GET'])
 def nyumbani():
     return render_template('index.html')
 
-# ANWANI YA 1: Kusajili Dereva kutoka kwenye Simu yake
-@app.route('/sajili_dereva', methods=['POST'])
-def api_sajili_dereva():
-    data = request.get_json() or {}
-    jina = data.get("jina")
-    simu = data.get("simu")
-    gari = data.get("aina_gari")
-    tani = float(data.get("uwezo_tani", 7.0))
-
-    madereva = pakia_data(FAILI_LA_MADEREVA, [
-        {"jina": "Kassim wa Guta", "simu": "071123344", "aina_gari": "Guta/Mkokoteni", "uwezo_tani": 1.5},
-        {"jina": "Mzee Juma", "simu": "0755667788", "aina_gari": "Fuso Tipper", "uwezo_tani": 7.0}
-    ])
-
-    if jina and simu:
-        dereva_mpya = {"jina": jina, "simu": simu, "aina_gari": gari, "uwezo_tani": tani}
-        madereva.append(dereva_mpya)
-        hifadhi_data(FAILI_LA_MADEREVA, madereva)
-        return jsonify({"status": True, "ujumbe": f"Dereva {jina} amesajiliwa kikamilifu!"})
-    
-    return jsonify({"status": False, "ujumbe": "Data hazijakamilika"}), 400
-
-# ANWANI YA 2: Mteja Kuomba Gari la Taka (Hapa AI inapiga hesabu)
+# ANWANI YA 2: Mteja kuomba gari la taka (Hapa ndio AI inafanya kazi)
 @app.route('/omba_gari', methods=['POST', 'GET'])
-def api_omba_gari():
+def omba_gari():
     if request.method == 'GET':
-        # Kama dereva anavuta data, tunampa safari ya mwisho iliyopo
-        safari_zote = pakia_data(FAILI_LA_SAFARI)
-        if safari_zote:
-            return jsonify({"status": True, "data_ya_safari": safari_zote[-1]})
-        return jsonify({"status": False, "ujumbe": "Hakuna safari yoyote kwa sasa"}), 404
+        # Majaribio ya haraka kwenye browser ikigongwa moja kwa moja
+        madereva = pakia_data(FAILI_LA_MADEREVA, MADEREVA_DEFAULT)
+        safari_mpyya = {
+            "mteja": "Kuangalia", "mtaa": "Mtaani", "watu_nyumbani": 1, "tani_ai": 0.17,
+            "dereva": madereva[0]["jina"], "gari": madereva[0]["aina_gari"],
+            "simu_dereva": madereva[0]["simu"], "kamisheni_tsh": "1,000"
+        }
+        return jsonify({"status": True, "data_ya_safari": safari_mpyya})
 
-    data = request.get_json() or {}
-    mteja = data.get("mteja", "Mteja wa kwanza")
-    mtaa = data.get("mtaa")
-    watu = int(data.get("watu", 4))
-    aina_huduma = data.get("aina_huduma", "Kaya")
+    # Kama ni POST kutoka kwenye Form ya mteja
+    taarifa = request.get_json()
+    if not taarifa:
+        return jsonify({"status": False, "message": "Hakuna data iliyopokelewa"}), 400
 
-    # AI inakadiria tani za taka kulingana na idadi ya watu
-    tani_zilizokadiriwa = float(ubongo_wa_ai.predict([[watu]])[0])
-    tani_safi = round(max(0.1, tani_zilizokadiriwa), 2)
+    mteja = taarifa.get('mteja', 'Mteja wa Siri')
+    mtaa = taarifa.get('mtaa', 'Mtaa usiojulikana')
+    watu = int(taarifa.get('watu', 4))
 
-    madereva = pakia_data(FAILI_LA_MADEREVA, [
-        {"jina": "Kassim wa Guta", "simu": "071123344", "aina_gari": "Guta/Mkokoteni", "uwezo_tani": 1.5},
-        {"jina": "Mzee Juma", "simu": "0755667788", "aina_gari": "Fuso Tipper", "uwezo_tani": 7.0}
-    ])
+    # Pangea AI Engine V1.0: Kukadiria uzito wa taka kulingana na watu waliopo nyumbani
+    tani_safi = round(watu * 0.17, 2)
 
-    # AI inachagua gari linalofaa kulingana na uzito wa taka
+    # Kupata Dereva sahihi kulingana na uzito wa mzigo uliohesabiwa na AI
+    madereva = pakia_data(FAILI_LA_MADEREVA, MADEREVA_DEFAULT)
     dereva_teule = madereva[0]
     for d in madereva:
         if d["uwezo_tani"] >= tani_safi:
@@ -107,7 +88,7 @@ def api_omba_gari():
         "gari": dereva_teule["aina_gari"],
         "kamisheni_tsh": f"{kamisheni:,}"
     }
-
+    
     safari_zote.append(safari_mpya)
     hifadhi_data(FAILI_LA_SAFARI, safari_zote)
 
@@ -116,7 +97,13 @@ def api_omba_gari():
 # ANWANI YA 3: Ukurasa wa Dereva kuona Order LIVE
 @app.route('/dereva', methods=['GET'])
 def ukurasa_wa_dereva():
-    return render_template('dereva.html')
+    return render_template('templates/templates/dereva.html')
+
+# ANWANI YA 4: API ya Dereva kuvuta order mpya bila kurefresh ukurasa (LIVE Update)
+@app.route('/api/pata_order', methods=['GET'])
+def pata_order_live():
+    safari_zote = pakia_data(FAILI_LA_SAFARI)
+    return jsonify(safari_zote)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
